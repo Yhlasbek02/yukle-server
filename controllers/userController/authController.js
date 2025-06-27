@@ -7,6 +7,7 @@ const EventEmitter = require("events");
 const { where, Op } = require("sequelize");
 const MAX_LISTENERS = 20;
 EventEmitter.defaultMaxListeners = MAX_LISTENERS;
+const {sendSmsCode} = require("../adminInitialize");
 
 let wss;
 const emitter = new EventEmitter();
@@ -229,14 +230,14 @@ class UserAuthentification {
             const randomNumber = Math.floor(Math.random() * 9000) + 1000;
             const str = randomNumber.toString();
             const text = `Your OTP code is ${str}`
-            console.log(randomNumber);
-            console.log(newuser.verified);
+            
             const expireTime = new Date(Date.now() + 5 * 60 * 1000);
             await verificationCodes.create({
                 code: randomNumber,
                 emailOrNumber: phoneNumber,
                 expireTime: expireTime
             })
+            sendSmsCode(phoneNumber, str);
             UserAuthentification.sendWebSocketMessage("code", { phone: phoneNumber, code: text });
             if (lang === "en") {
                 return res.status(201).json({ message: "Verify your phone number" });
@@ -534,11 +535,10 @@ class UserAuthentification {
             }
 
             const randomNumber = Math.floor(Math.random() * 9000) + 1000;
-            console.log(randomNumber);
-            const text = `Your verification code is ${randomNumber}`
+            const str = randomNumber.toString()
             const expireTime = new Date(Date.now() + 5 * 60 * 1000);
             await verificationCodes.create({ code: randomNumber, expireTime: expireTime, emailOrNumber: phoneNumber });
-            UserAuthentification.sendWebSocketmessage("code", { phone: phoneNumber, code: text });
+            sendSmsCode(phoneNumber, str);
             if (lang === "en") {
                 return res.status(201).json({ message: "OTP code was sent" });
             } if (lang === "ru") {

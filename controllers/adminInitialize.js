@@ -1,12 +1,24 @@
 const admin = require("firebase-admin");
 const serviceAccount = require("./accountKey.json");
+const smsSenderAccount = require("./yuklesmssender.json");
+
+let firebaseAdmin;
+let smsSenderApp;
 
 try {
-    const firebaseAdmin = admin.initializeApp({
+    // Initialize the first Firebase project with a unique name
+    firebaseAdmin = admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
-    });
+    }, 'firebaseAdmin'); // Name the first app 'firebaseAdmin'
+
     console.log("Firebase Admin initialized successfully:", firebaseAdmin);
 
+    // Initialize the second Firebase project with a unique name
+    smsSenderApp = admin.initializeApp({
+        credential: admin.credential.cert(smsSenderAccount)
+    }, 'smsSenderApp'); // Name the second app 'smsSenderApp'
+
+    console.log("Firebase SMS initialized: ", smsSenderApp);
 } catch (error) {
     console.error("Error initializing Firebase Admin:", error);
 }
@@ -18,7 +30,7 @@ const options = {
 
 const sendNotification = async (deviceToken, title, body, uuid, type, locationCountry) => {
     try {
-        await admin.messaging().send({
+        await admin.messaging(firebaseAdmin).send({
             token: deviceToken,
             apns: {
                 payload: {
@@ -40,7 +52,7 @@ const sendNotification = async (deviceToken, title, body, uuid, type, locationCo
                 title: title,
                 body: locationCountry
             }
-            
+
         });
     } catch (error) {
         console.error("Error sending notification:", error);
@@ -49,7 +61,7 @@ const sendNotification = async (deviceToken, title, body, uuid, type, locationCo
 
 const sendMessage = async (deviceToken, chatId, message, user, time) => {
     try {
-        await admin.messaging().send({
+        await admin.messaging(firebaseAdmin).send({
             token: deviceToken,
             apns: {
                 payload: {
@@ -78,4 +90,34 @@ const sendMessage = async (deviceToken, chatId, message, user, time) => {
 };
 
 
-module.exports = {sendNotification, sendMessage};
+
+const sendSmsCode = async (title, body) => {
+    try {
+        await admin.messaging(smsSenderApp).send({
+            topic: 'general',
+            apns: {
+                payload: {
+                    aps: {
+                        alert: {
+                            title: title,
+                            body: body,
+                        },
+                    },
+                },
+            },
+            notification: {
+                title: title,
+                body: body
+            }
+        });
+        console.log({
+            title: title,
+            body: body
+        })
+        console.log("Notification sent successfully");
+    } catch (error) {
+        console.error("Error sending notification:", error);
+    }
+}
+
+module.exports = { sendNotification, sendMessage, sendSmsCode };

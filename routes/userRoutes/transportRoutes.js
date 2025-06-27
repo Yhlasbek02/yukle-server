@@ -11,6 +11,6 @@ router.get("/:lang", controllers.getTransports);
 router.get("/my/:lang", controllers.myTransport);
 router.get("/:id/:lang", controllers.specificTransport);
 router.delete("/delete/:id/:lang", controllers.deleteTransport);
-
+router.post("/add-status/:id", controllers.addUseStatus);
 
 module.exports = router;

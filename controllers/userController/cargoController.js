@@ -13,7 +13,8 @@ class CargoController {
                 tm: ['id', 'uuid', [Sequelize.col('nameTm'), 'name']],
             };
             const types = await DangerousType.findAll({
-                attributes: attributes[lang] || {}
+                attributes: attributes[lang] || {},
+                order: [['id', 'ASC']]
             });
             if (!types || types.length === 0) {
                 if (lang === "en") {
@@ -194,6 +195,7 @@ class CargoController {
                 tm: ['id', 'uuid', [Sequelize.col('nameTm'), 'name']],
             };
             const filters = {
+                status: false,
                 typeId: req.query.type,
                 fromCountry: req.query.from,
                 toCountry: req.query.to,
@@ -328,7 +330,7 @@ class CargoController {
             const sortOrder = req.query.order || 'ASC';
             const userId = req.user.id;
             const totalCount = await Cargo.count({
-                where: { userId: userId }
+                where: { userId: userId, status: false }
             });
             const attributes = {
                 en: ['id', 'uuid', [Sequelize.col('nameEn'), 'name']],
@@ -340,7 +342,7 @@ class CargoController {
                 offset,
                 limit: parseInt(pageSize),
                 order: [[sort, sortOrder]],
-                where: { userId: userId },
+                where: { userId: userId, status: false },
                 attributes: {
                     exclude: ['updatedAt', 'userId', 'typeId', 'fromCountry', 'fromCity', 'toCountry', 'toCity']
                 },
@@ -520,7 +522,8 @@ class CargoController {
                     return res.status(404).json({ message: "Cargos not found" });
                 }
             }
-            await cargo.destroy();
+            cargo.status = true;
+            await cargo.save();
             if (lang === "en") {
                 return res.status(200).json({ message: "Cargo deleted successfully" });
             } if (lang === "ru") {
@@ -528,6 +531,23 @@ class CargoController {
             } if (lang === "tr" || lang === "tm") {
                 return res.status(200).json({ message: "Cargo deleted successfully" });
             }
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Error in deleting cargo" });
+        }
+    }
+
+    async addUseStatus(req, res) {
+        try {
+            const {id} = req.params;
+            const {status} = req.body;
+            const cargo = await Cargo.findOne({where: {uuid: id}});
+            if (!cargo) {
+                return res.status(404).json({message: "Not found"});
+            }
+            cargo.useStatus = status;
+            await cargo.save();
+            res.status(200).json({message: "Status updated"});
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "Error in deleting cargo" });

@@ -189,6 +189,7 @@ class transportController {
             const sort = req.query.sort || 'createdAt';
             const sortOrder = req.query.order || 'DESC';
             const filters = {
+                status: false,
                 typeId: req.query.type,
                 locationCountry: req.query.location,
                 transportationTypeId: req.query.transportation,
@@ -300,13 +301,13 @@ class transportController {
             const sortOrder = req.query.order || 'ASC';
             const id = req.user.id;
             const totalCount = await Transport.count({
-                where: { userId: id }
+                where: { userId: id, status: false }
             });
             let transports = await Transport.findAll({
                 offset,
                 limit: parseInt(pageSize),
                 order: [[sort, sortOrder]],
-                where: { userId: id },
+                where: { userId: id, status: false },
                 attributes: {
                     exclude: ['updatedAt', 'userId', 'typeId', 'belongsTo', 'locationCountry', 'locationCity']
                 },
@@ -377,7 +378,6 @@ class transportController {
 
     async specificTransport(req, res) {
         try {
-            console.log(req.params);
             const { id, lang } = req.params;
             const attributes = {
                 en: ['id', 'uuid', [Sequelize.col('nameEn'), 'name']],
@@ -468,7 +468,8 @@ class transportController {
                     return res.status(404).json({ message: "Transport not found" });
                 }
             }
-            await transport.destroy();
+            transport.status = true;
+            await transport.save();
             if (lang === "en") {
                 return res.status(200).json({ message: "Transport deleted successfully" });
             } if (lang === "ru") {
@@ -480,6 +481,23 @@ class transportController {
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "Error in deleting transport" });
+        }
+    }
+
+    async addUseStatus(req, res) {
+        try {
+            const {id} = req.params;
+            const {status} = req.body;
+            const transport = await Transport.findOne({where: {uuid: id}});
+            if (!transport) {
+                return res.status(404).json({message: "Not found"});
+            }
+            transport.useStatus = status;
+            await transport.save();
+            res.status(200).json({message: "Status updated"});
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Error in deleting cargo" });
         }
     }
 }

@@ -55,7 +55,7 @@ class DangerousTypeController {
             let queryOptions = {
                 limit: parseInt(limit),
                 offset,
-                order: [['id', 'DESC']]
+                order: [['id', 'ASC']]
             };
             const { count, rows: types } = await DangerousType.findAndCountAll(queryOptions);
             const totalPages = Math.ceil(count / parseInt(limit));

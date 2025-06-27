@@ -143,6 +143,9 @@ const Cargo = sequelize.define("Cargo", {
         type: DataTypes.BOOLEAN,
         defaultValue: false
     },
+    useStatus: {
+        type: DataTypes.BOOLEAN
+    },
     additional_info: {
         type: DataTypes.TEXT,
     }
@@ -190,6 +193,9 @@ const Transport = sequelize.define("Transport", {
     status: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
+    },
+    useStatus: {
+        type: DataTypes.BOOLEAN
     },
     additional_info: {
         type: DataTypes.TEXT,

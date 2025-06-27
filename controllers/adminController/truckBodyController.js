@@ -1,5 +1,5 @@
-const {TruckBody, TransportType} = require("../../models/models");
-
+const { TruckBody, TransportType } = require("../../models/models");
+const Sequelize = require("sequelize")
 class TruckBodyController {
     async add(req, res) {
         try {
@@ -53,25 +53,39 @@ class TruckBodyController {
             const page = req.query.page || 1;
             const limit = req.query.pageSize || 10;
             const offset = (parseInt(page) - 1) * parseInt(limit);
-            let queryOptions = {
+
+            const types = await TruckBody.findAll({
                 limit: parseInt(limit),
                 offset,
-                order: [['id', 'DESC']],
-                include: [{model: TransportType, as: 'transportType'}]
-            };
-            const { count, rows: types } = await TruckBody.findAndCountAll(queryOptions);
+                include: [
+                    {
+                        model: TransportType,
+                        as: 'transportType',
+                        attributes: ['id', 'nameEn']
+                    }
+                ],
+                order: [
+                    [Sequelize.literal(`"transportType"."nameEn"`), 'ASC'], // Order by transport type name alphabetically
+                    ['id', 'DESC'] // Then order by ID descending
+                ]
+            });
+
+            const count = await TruckBody.count();
+
             const totalPages = Math.ceil(count / parseInt(limit));
+
             res.status(200).json({
                 types,
                 totalPages,
                 totalTypes: count,
-                currentPage: page
-            })
+                currentPage: parseInt(page)
+            });
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: 'Failed to get types' });
         }
     }
+
 }
 
 

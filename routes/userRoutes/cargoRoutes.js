@@ -10,5 +10,6 @@ router.get("/:lang", controllers.getCargos);
 router.get("/my/:lang", controllers.getMyCargos);
 router.get("/:id/:lang",controllers.specificCargo);
 router.delete("/delete/:id/:lang", controllers.deleteCargo);
+router.post("/add-status/:id", controllers.addUseStatus);
 
 module.exports = router;
